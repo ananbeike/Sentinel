@@ -22,23 +22,27 @@ import com.alibaba.csp.sentinel.log.RecordLog;
 import com.alibaba.csp.sentinel.transport.CommandCenter;
 
 /**
+ * 使用{@link CommandCenterProvider}获取对应的{@link CommandCenter}实现，依次执行beforeStart和start方法，以启动服务。
+ * 即只要加载了sentinel-transport-common模块并通过SPI提供CommandCenter的实现，便会在InitFunc被调用时启动服务。
+ *
+ * @see CommandCenter
+ * @see CommandCenterProvider
  * @author Eric Zhao
  */
 @InitOrder(-1)
-public class CommandCenterInitFunc implements InitFunc {
+public class CommandCenterInitFunc implements InitFunc{
 
     @Override
-    public void init() throws Exception {
+    public void init() throws Exception{
         CommandCenter commandCenter = CommandCenterProvider.getCommandCenter();
 
-        if (commandCenter == null) {
+        if (commandCenter == null){
             RecordLog.warn("[CommandCenterInitFunc] Cannot resolve CommandCenter");
             return;
         }
 
         commandCenter.beforeStart();
         commandCenter.start();
-        RecordLog.info("[CommandCenterInit] Starting command center: "
-                + commandCenter.getClass().getCanonicalName());
+        RecordLog.info("[CommandCenterInit] Starting command center: " + commandCenter.getClass().getCanonicalName());
     }
 }

@@ -18,6 +18,8 @@ package com.alibaba.csp.sentinel.command;
 /**
  * Represent a handler that handles a {@link CommandRequest}.
  *
+ * 请求处理接口，请求对象为CommandRequest，响应对象为CommandResponse
+ * 
  * @author Eric Zhao
  */
 public interface CommandHandler<R> {
@@ -25,7 +27,8 @@ public interface CommandHandler<R> {
     /**
      * Handle the given Courier command request.
      *
-     * @param request the request to handle
+     * @param request
+     *            the request to handle
      * @return the response
      */
     CommandResponse<R> handle(CommandRequest request);

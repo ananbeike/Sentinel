@@ -18,13 +18,21 @@ package com.alibaba.csp.sentinel.command.annotation;
 import java.lang.annotation.*;
 
 /**
+ * 注解，用于为Handler添加元数据，包括处理器名(URL路径名)和描述
+ * 用在 {@link com.alibaba.csp.sentinel.command.CommandHandler} 实现类上，
+ * 
  * @author Eric Zhao
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Target({ ElementType.TYPE })
 @Documented
-public @interface CommandMapping {
+public @interface CommandMapping{
 
+    /**
+     * URL路径名
+     * 
+     * @return
+     */
     String name();
 
     /**

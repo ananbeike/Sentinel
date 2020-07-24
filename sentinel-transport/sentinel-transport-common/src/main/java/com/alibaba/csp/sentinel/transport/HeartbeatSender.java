@@ -19,6 +19,8 @@ package com.alibaba.csp.sentinel.transport;
  * The heartbeat sender which is responsible for sending heartbeat to remote dashboard
  * periodically per {@code interval}.
  *
+ * 心跳发送接口，用于给控制台dashboard定时发送心跳
+ *
  * @author leyou
  * @author Eric Zhao
  */

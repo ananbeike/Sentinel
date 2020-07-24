@@ -208,7 +208,7 @@ public class DefaultClusterTokenClient implements ClusterTokenClient{
             RecordLog.warn("[DefaultClusterTokenClient] Client not created, please check your config for cluster client");
             return clientFail();
         }
-        
+
         ClusterResponse response = transportClient.sendRequest(request);
 
         // 将相应封装成 TokenResult

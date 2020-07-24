@@ -27,46 +27,48 @@ import com.alibaba.csp.sentinel.util.StringUtil;
 /**
  * Provides and filters command handlers registered via SPI.
  *
+ * 会加载所有的{@link CommandHandler}实现类，不同模块提供的Handler实现只要以SPI的方式，在META-INF中提供对应的全限定名就会被该类扫描并使用。
+ * 实现类需要增加CommandMapping注解以指定URL。
+ * 
  * @author Eric Zhao
  */
-public class CommandHandlerProvider implements Iterable<CommandHandler> {
+public class CommandHandlerProvider implements Iterable<CommandHandler>{
 
-    private final ServiceLoader<CommandHandler> serviceLoader = ServiceLoaderUtil.getServiceLoader(
-        CommandHandler.class);
+    private final ServiceLoader<CommandHandler> serviceLoader = ServiceLoaderUtil.getServiceLoader(CommandHandler.class);
 
     /**
      * Get all command handlers annotated with {@link CommandMapping} with command name.
      *
      * @return list of all named command handlers
      */
-    public Map<String, CommandHandler> namedHandlers() {
+    public Map<String, CommandHandler> namedHandlers(){
         Map<String, CommandHandler> map = new HashMap<String, CommandHandler>();
-        for (CommandHandler handler : serviceLoader) {
+        for (CommandHandler handler : serviceLoader){
             String name = parseCommandName(handler);
-            if (!StringUtil.isEmpty(name)) {
+            if (!StringUtil.isEmpty(name)){
                 map.put(name, handler);
             }
         }
         return map;
     }
 
-    private String parseCommandName(CommandHandler handler) {
+    private String parseCommandName(CommandHandler handler){
         CommandMapping commandMapping = handler.getClass().getAnnotation(CommandMapping.class);
-        if (commandMapping != null) {
+        if (commandMapping != null){
             return commandMapping.name();
-        } else {
+        }else{
             return null;
         }
     }
 
     @Override
-    public Iterator<CommandHandler> iterator() {
+    public Iterator<CommandHandler> iterator(){
         return serviceLoader.iterator();
     }
 
     private static final CommandHandlerProvider INSTANCE = new CommandHandlerProvider();
 
-    public static CommandHandlerProvider getInstance() {
+    public static CommandHandlerProvider getInstance(){
         return INSTANCE;
     }
 }

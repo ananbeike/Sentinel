@@ -16,15 +16,22 @@
 package com.alibaba.csp.sentinel.transport;
 
 /**
+ * 命令中心，作为服务启动，定义了start和stop方法，主要提供handler的初始化和注册服务。
+ *
+ * 有两个实现：
+ * 1.com.alibaba.csp.sentinel.transport.command.NettyHttpCommandCenter
+ * 2.com.alibaba.csp.sentinel.transport.command.SimpleHttpCommandCenter
+ * 
  * @author Eric Zhao
  */
-public interface CommandCenter {
+public interface CommandCenter{
 
     /**
      * Prepare and init for the command center (e.g. register commands).
      * This will be executed before starting.
      *
-     * @throws Exception if error occurs
+     * @throws Exception
+     *             if error occurs
      */
     void beforeStart() throws Exception;
 
@@ -32,14 +39,16 @@ public interface CommandCenter {
      * Start the command center in the background.
      * This method should NOT block.
      *
-     * @throws Exception if error occurs
+     * @throws Exception
+     *             if error occurs
      */
     void start() throws Exception;
 
     /**
      * Stop the command center and do cleanup.
      *
-     * @throws Exception if error occurs
+     * @throws Exception
+     *             if error occurs
      */
     void stop() throws Exception;
 }

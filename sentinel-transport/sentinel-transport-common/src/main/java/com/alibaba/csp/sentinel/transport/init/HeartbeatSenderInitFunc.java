@@ -32,25 +32,27 @@ import com.alibaba.csp.sentinel.transport.config.TransportConfig;
 /**
  * Global init function for heartbeat sender.
  *
+ * {@link HeartbeatSenderProvider}获取对应的HeartbeatSender实现，启动定时器，每隔5秒执行一次sendHeartbeat方法。
+ * 即只要加载了sentinel-transport-common模块并通过SPI提供HeartbeatSender的实现，便会在InitFunc被调用时启动心跳定时器。
+ *
+ * @see HeartbeatSenderProvider
  * @author Eric Zhao
  */
 @InitOrder(-1)
-public class HeartbeatSenderInitFunc implements InitFunc {
+public class HeartbeatSenderInitFunc implements InitFunc{
 
     private ScheduledExecutorService pool = null;
 
-    private void initSchedulerIfNeeded() {
-        if (pool == null) {
-            pool = new ScheduledThreadPoolExecutor(2,
-                new NamedThreadFactory("sentinel-heartbeat-send-task", true),
-                new DiscardOldestPolicy());
+    private void initSchedulerIfNeeded(){
+        if (pool == null){
+            pool = new ScheduledThreadPoolExecutor(2, new NamedThreadFactory("sentinel-heartbeat-send-task", true), new DiscardOldestPolicy());
         }
     }
 
     @Override
-    public void init() {
+    public void init(){
         HeartbeatSender sender = HeartbeatSenderProvider.getHeartbeatSender();
-        if (sender == null) {
+        if (sender == null){
             RecordLog.warn("[HeartbeatSenderInitFunc] WARN: No HeartbeatSender loaded");
             return;
         }
@@ -61,40 +63,40 @@ public class HeartbeatSenderInitFunc implements InitFunc {
         scheduleHeartbeatTask(sender, interval);
     }
 
-    private boolean isValidHeartbeatInterval(Long interval) {
+    private boolean isValidHeartbeatInterval(Long interval){
         return interval != null && interval > 0;
     }
 
-    private void setIntervalIfNotExists(long interval) {
+    private void setIntervalIfNotExists(long interval){
         SentinelConfig.setConfig(TransportConfig.HEARTBEAT_INTERVAL_MS, String.valueOf(interval));
     }
 
-    long retrieveInterval(/*@NonNull*/ HeartbeatSender sender) {
+    long retrieveInterval(/* @NonNull */ HeartbeatSender sender){
         Long intervalInConfig = TransportConfig.getHeartbeatIntervalMs();
-        if (isValidHeartbeatInterval(intervalInConfig)) {
-            RecordLog.info("[HeartbeatSenderInitFunc] Using heartbeat interval "
-                + "in Sentinel config property: " + intervalInConfig);
+        if (isValidHeartbeatInterval(intervalInConfig)){
+            RecordLog.info("[HeartbeatSenderInitFunc] Using heartbeat interval " + "in Sentinel config property: " + intervalInConfig);
             return intervalInConfig;
-        } else {
+        }else{
             long senderInterval = sender.intervalMs();
-            RecordLog.info("[HeartbeatSenderInit] Heartbeat interval not configured in "
-                + "config property or invalid, using sender default: " + senderInterval);
+            RecordLog.info(
+                            "[HeartbeatSenderInit] Heartbeat interval not configured in " + "config property or invalid, using sender default: "
+                                            + senderInterval);
             return senderInterval;
         }
     }
 
-    private void scheduleHeartbeatTask(/*@NonNull*/ final HeartbeatSender sender, /*@Valid*/ long interval) {
-        pool.scheduleAtFixedRate(new Runnable() {
+    private void scheduleHeartbeatTask(/* @NonNull */ final HeartbeatSender sender, /* @Valid */ long interval){
+        pool.scheduleAtFixedRate(new Runnable(){
+
             @Override
-            public void run() {
-                try {
+            public void run(){
+                try{
                     sender.sendHeartbeat();
-                } catch (Throwable e) {
+                }catch (Throwable e){
                     RecordLog.warn("[HeartbeatSender] Send heartbeat error", e);
                 }
             }
         }, 5000, interval, TimeUnit.MILLISECONDS);
-        RecordLog.info("[HeartbeatSenderInit] HeartbeatSender started: "
-            + sender.getClass().getCanonicalName());
+        RecordLog.info("[HeartbeatSenderInit] HeartbeatSender started: " + sender.getClass().getCanonicalName());
     }
 }
