@@ -22,22 +22,15 @@ import java.net.SocketException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import com.alibaba.csp.sentinel.command.CommandHandler;
 import com.alibaba.csp.sentinel.command.CommandHandlerProvider;
 import com.alibaba.csp.sentinel.concurrent.NamedThreadFactory;
-import com.alibaba.csp.sentinel.transport.log.CommandCenterLog;
 import com.alibaba.csp.sentinel.transport.CommandCenter;
 import com.alibaba.csp.sentinel.transport.command.http.HttpEventTask;
 import com.alibaba.csp.sentinel.transport.config.TransportConfig;
+import com.alibaba.csp.sentinel.transport.log.CommandCenterLog;
 import com.alibaba.csp.sentinel.util.StringUtil;
 
 /***
@@ -45,72 +38,83 @@ import com.alibaba.csp.sentinel.util.StringUtil;
  *
  * @author youji.zj
  */
-public class SimpleHttpCommandCenter implements CommandCenter {
+public class SimpleHttpCommandCenter implements CommandCenter{
 
     private static final int PORT_UNINITIALIZED = -1;
 
     private static final int DEFAULT_SERVER_SO_TIMEOUT = 3000;
+
     private static final int DEFAULT_PORT = 8719;
 
     @SuppressWarnings("rawtypes")
     private static final Map<String, CommandHandler> handlerMap = new ConcurrentHashMap<String, CommandHandler>();
 
     @SuppressWarnings("PMD.ThreadPoolCreationRule")
-    private ExecutorService executor = Executors.newSingleThreadExecutor(
-        new NamedThreadFactory("sentinel-command-center-executor"));
+    private ExecutorService executor = Executors.newSingleThreadExecutor(new NamedThreadFactory("sentinel-command-center-executor"));
+
     private ExecutorService bizExecutor;
 
     private ServerSocket socketReference;
 
     @Override
     @SuppressWarnings("rawtypes")
-    public void beforeStart() throws Exception {
+    public void beforeStart() throws Exception{
         // Register handlers
         Map<String, CommandHandler> handlers = CommandHandlerProvider.getInstance().namedHandlers();
         registerCommands(handlers);
     }
 
     @Override
-    public void start() throws Exception {
+    public void start() throws Exception{
+        //获取当前机器的cpu线程数
         int nThreads = Runtime.getRuntime().availableProcessors();
-        this.bizExecutor = new ThreadPoolExecutor(nThreads, nThreads, 0L, TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<Runnable>(10),
-            new NamedThreadFactory("sentinel-command-center-service-executor"),
-            new RejectedExecutionHandler() {
-                @Override
-                public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-                    CommandCenterLog.info("EventTask rejected");
-                    throw new RejectedExecutionException();
-                }
-            });
 
-        Runnable serverInitTask = new Runnable() {
+        //创建一个cpu线程数大小的固定线程池，用来做业务线程池用
+        this.bizExecutor = new ThreadPoolExecutor(
+                        nThreads,
+                        nThreads,
+                        0L,
+                        TimeUnit.MILLISECONDS,
+                        new ArrayBlockingQueue<Runnable>(10),
+                        new NamedThreadFactory("sentinel-command-center-service-executor"),
+                        new RejectedExecutionHandler(){
+
+                            @Override
+                            public void rejectedExecution(Runnable r,ThreadPoolExecutor executor){
+                                CommandCenterLog.info("EventTask rejected");
+                                throw new RejectedExecutionException();
+                            }
+                        });
+
+        Runnable serverInitTask = new Runnable(){
+
             int port;
 
             {
-                try {
+                try{
                     port = Integer.parseInt(TransportConfig.getPort());
-                } catch (Exception e) {
+                }catch (Exception e){
                     port = DEFAULT_PORT;
                 }
             }
 
             @Override
-            public void run() {
+            public void run(){
                 boolean success = false;
+                //创建一个ServerSocket
                 ServerSocket serverSocket = getServerSocketFromBasePort(port);
 
-                if (serverSocket != null) {
+                if (serverSocket != null){
                     CommandCenterLog.info("[CommandCenter] Begin listening at port " + serverSocket.getLocalPort());
                     socketReference = serverSocket;
                     executor.submit(new ServerThread(serverSocket));
                     success = true;
                     port = serverSocket.getLocalPort();
-                } else {
+                }else{
                     CommandCenterLog.info("[CommandCenter] chooses port fail, http command center will not work");
                 }
 
-                if (!success) {
+                if (!success){
                     port = PORT_UNINITIALIZED;
                 }
 
@@ -127,21 +131,22 @@ public class SimpleHttpCommandCenter implements CommandCenter {
      * Get a server socket from an available port from a base port.<br>
      * Increasing on port number will occur when the port has already been used.
      *
-     * @param basePort base port to start
+     * @param basePort
+     *            base port to start
      * @return new socket with available port
      */
-    private static ServerSocket getServerSocketFromBasePort(int basePort) {
+    private static ServerSocket getServerSocketFromBasePort(int basePort){
         int tryCount = 0;
-        while (true) {
-            try {
+        while (true){
+            try{
                 ServerSocket server = new ServerSocket(basePort + tryCount / 3, 100);
                 server.setReuseAddress(true);
                 return server;
-            } catch (IOException e) {
+            }catch (IOException e){
                 tryCount++;
-                try {
+                try{
                     TimeUnit.MILLISECONDS.sleep(30);
-                } catch (InterruptedException e1) {
+                }catch (InterruptedException e1){
                     break;
                 }
             }
@@ -150,11 +155,11 @@ public class SimpleHttpCommandCenter implements CommandCenter {
     }
 
     @Override
-    public void stop() throws Exception {
-        if (socketReference != null) {
-            try {
+    public void stop() throws Exception{
+        if (socketReference != null){
+            try{
                 socketReference.close();
-            } catch (IOException e) {
+            }catch (IOException e){
                 CommandCenterLog.warn("Error when releasing the server socket", e);
             }
         }
@@ -167,41 +172,41 @@ public class SimpleHttpCommandCenter implements CommandCenter {
     /**
      * Get the name set of all registered commands.
      */
-    public static Set<String> getCommands() {
+    public static Set<String> getCommands(){
         return handlerMap.keySet();
     }
 
-    class ServerThread extends Thread {
+    class ServerThread extends Thread{
 
         private ServerSocket serverSocket;
 
-        ServerThread(ServerSocket s) {
+        ServerThread(ServerSocket s){
             this.serverSocket = s;
             setName("sentinel-courier-server-accept-thread");
         }
 
         @Override
-        public void run() {
-            while (true) {
+        public void run(){
+            while (true){
                 Socket socket = null;
-                try {
+                try{
                     socket = this.serverSocket.accept();
                     setSocketSoTimeout(socket);
                     HttpEventTask eventTask = new HttpEventTask(socket);
                     bizExecutor.submit(eventTask);
-                } catch (Exception e) {
+                }catch (Exception e){
                     CommandCenterLog.info("Server error", e);
-                    if (socket != null) {
-                        try {
+                    if (socket != null){
+                        try{
                             socket.close();
-                        } catch (Exception e1) {
+                        }catch (Exception e1){
                             CommandCenterLog.info("Error when closing an opened socket", e1);
                         }
                     }
-                    try {
+                    try{
                         // In case of infinite log.
                         Thread.sleep(10);
-                    } catch (InterruptedException e1) {
+                    }catch (InterruptedException e1){
                         // Indicates the task should stop.
                         break;
                     }
@@ -211,26 +216,26 @@ public class SimpleHttpCommandCenter implements CommandCenter {
     }
 
     @SuppressWarnings("rawtypes")
-    public static CommandHandler getHandler(String commandName) {
+    public static CommandHandler getHandler(String commandName){
         return handlerMap.get(commandName);
     }
 
     @SuppressWarnings("rawtypes")
-    public static void registerCommands(Map<String, CommandHandler> handlerMap) {
-        if (handlerMap != null) {
-            for (Entry<String, CommandHandler> e : handlerMap.entrySet()) {
+    public static void registerCommands(Map<String, CommandHandler> handlerMap){
+        if (handlerMap != null){
+            for (Entry<String, CommandHandler> e : handlerMap.entrySet()){
                 registerCommand(e.getKey(), e.getValue());
             }
         }
     }
 
     @SuppressWarnings("rawtypes")
-    public static void registerCommand(String commandName, CommandHandler handler) {
-        if (StringUtil.isEmpty(commandName)) {
+    public static void registerCommand(String commandName,CommandHandler handler){
+        if (StringUtil.isEmpty(commandName)){
             return;
         }
 
-        if (handlerMap.containsKey(commandName)) {
+        if (handlerMap.containsKey(commandName)){
             CommandCenterLog.warn("Register failed (duplicate command): " + commandName);
             return;
         }
@@ -241,8 +246,8 @@ public class SimpleHttpCommandCenter implements CommandCenter {
     /**
      * Avoid server thread hang, 3 seconds timeout by default.
      */
-    private void setSocketSoTimeout(Socket socket) throws SocketException {
-        if (socket != null) {
+    private void setSocketSoTimeout(Socket socket) throws SocketException{
+        if (socket != null){
             socket.setSoTimeout(DEFAULT_SERVER_SO_TIMEOUT);
         }
     }

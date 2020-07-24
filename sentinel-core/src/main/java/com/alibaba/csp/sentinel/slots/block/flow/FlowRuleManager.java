@@ -25,12 +25,12 @@ import java.util.concurrent.TimeUnit;
 
 import com.alibaba.csp.sentinel.concurrent.NamedThreadFactory;
 import com.alibaba.csp.sentinel.log.RecordLog;
-import com.alibaba.csp.sentinel.util.AssertUtil;
-import com.alibaba.csp.sentinel.util.StringUtil;
 import com.alibaba.csp.sentinel.node.metric.MetricTimerListener;
 import com.alibaba.csp.sentinel.property.DynamicSentinelProperty;
 import com.alibaba.csp.sentinel.property.PropertyListener;
 import com.alibaba.csp.sentinel.property.SentinelProperty;
+import com.alibaba.csp.sentinel.util.AssertUtil;
+import com.alibaba.csp.sentinel.util.StringUtil;
 
 /**
  * <p>
@@ -44,19 +44,32 @@ import com.alibaba.csp.sentinel.property.SentinelProperty;
  * @author jialiang.linjl
  * @author Eric Zhao
  */
-public class FlowRuleManager {
+public class FlowRuleManager{
 
+    /**
+     * 规则
+     */
     private static final Map<String, List<FlowRule>> flowRules = new ConcurrentHashMap<String, List<FlowRule>>();
 
     private static final FlowPropertyListener LISTENER = new FlowPropertyListener();
+
+    /**
+     * 用来监听配置是否发生变化
+     */
     private static SentinelProperty<List<FlowRule>> currentProperty = new DynamicSentinelProperty<List<FlowRule>>();
 
+    /**
+     * 创建一个延迟的线程池
+     */
     @SuppressWarnings("PMD.ThreadPoolCreationRule")
-    private static final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1,
-        new NamedThreadFactory("sentinel-metrics-record-task", true));
+    private static final ScheduledExecutorService SCHEDULER = Executors
+                    .newScheduledThreadPool(1, new NamedThreadFactory("sentinel-metrics-record-task", true));
 
-    static {
+    static{
+        //设置监听
         currentProperty.addListener(LISTENER);
+
+        //每一秒钟调用一次MetricTimerListener的run方法
         SCHEDULER.scheduleAtFixedRate(new MetricTimerListener(), 0, 1, TimeUnit.SECONDS);
     }
 
@@ -64,11 +77,12 @@ public class FlowRuleManager {
      * Listen to the {@link SentinelProperty} for {@link FlowRule}s. The property is the source of {@link FlowRule}s.
      * Flow rules can also be set by {@link #loadRules(List)} directly.
      *
-     * @param property the property to listen.
+     * @param property
+     *            the property to listen.
      */
-    public static void register2Property(SentinelProperty<List<FlowRule>> property) {
+    public static void register2Property(SentinelProperty<List<FlowRule>> property){
         AssertUtil.notNull(property, "property cannot be null");
-        synchronized (LISTENER) {
+        synchronized (LISTENER){
             RecordLog.info("[FlowRuleManager] Registering new property to flow rule manager");
             currentProperty.removeListener(LISTENER);
             property.addListener(LISTENER);
@@ -81,9 +95,9 @@ public class FlowRuleManager {
      *
      * @return a new copy of the rules.
      */
-    public static List<FlowRule> getRules() {
+    public static List<FlowRule> getRules(){
         List<FlowRule> rules = new ArrayList<FlowRule>();
-        for (Map.Entry<String, List<FlowRule>> entry : flowRules.entrySet()) {
+        for (Map.Entry<String, List<FlowRule>> entry : flowRules.entrySet()){
             rules.addAll(entry.getValue());
         }
         return rules;
@@ -92,30 +106,31 @@ public class FlowRuleManager {
     /**
      * Load {@link FlowRule}s, former rules will be replaced.
      *
-     * @param rules new rules to load.
+     * @param rules
+     *            new rules to load.
      */
-    public static void loadRules(List<FlowRule> rules) {
+    public static void loadRules(List<FlowRule> rules){
         currentProperty.updateValue(rules);
     }
 
-    static Map<String, List<FlowRule>> getFlowRuleMap() {
+    static Map<String, List<FlowRule>> getFlowRuleMap(){
         return flowRules;
     }
 
-    public static boolean hasConfig(String resource) {
+    public static boolean hasConfig(String resource){
         return flowRules.containsKey(resource);
     }
 
-    public static boolean isOtherOrigin(String origin, String resourceName) {
-        if (StringUtil.isEmpty(origin)) {
+    public static boolean isOtherOrigin(String origin,String resourceName){
+        if (StringUtil.isEmpty(origin)){
             return false;
         }
 
         List<FlowRule> rules = flowRules.get(resourceName);
 
-        if (rules != null) {
-            for (FlowRule rule : rules) {
-                if (origin.equals(rule.getLimitApp())) {
+        if (rules != null){
+            for (FlowRule rule : rules){
+                if (origin.equals(rule.getLimitApp())){
                     return false;
                 }
             }
@@ -124,12 +139,12 @@ public class FlowRuleManager {
         return true;
     }
 
-    private static final class FlowPropertyListener implements PropertyListener<List<FlowRule>> {
+    private static final class FlowPropertyListener implements PropertyListener<List<FlowRule>>{
 
         @Override
-        public void configUpdate(List<FlowRule> value) {
+        public void configUpdate(List<FlowRule> value){
             Map<String, List<FlowRule>> rules = FlowRuleUtil.buildFlowRuleMap(value);
-            if (rules != null) {
+            if (rules != null){
                 flowRules.clear();
                 flowRules.putAll(rules);
             }
@@ -137,9 +152,9 @@ public class FlowRuleManager {
         }
 
         @Override
-        public void configLoad(List<FlowRule> conf) {
+        public void configLoad(List<FlowRule> conf){
             Map<String, List<FlowRule>> rules = FlowRuleUtil.buildFlowRuleMap(conf);
-            if (rules != null) {
+            if (rules != null){
                 flowRules.clear();
                 flowRules.putAll(rules);
             }

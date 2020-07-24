@@ -24,144 +24,192 @@ import com.alibaba.csp.sentinel.slots.block.RuleConstant;
  * @author Eric Zhao
  * @since 1.6.0
  */
-public class GatewayFlowRule {
+public class GatewayFlowRule{
 
+    /**
+     * 资源名称，可以是网关中的 route 名称或者用户自定义的 API 分组名称。
+     */
     private String resource;
+
+    /**
+     * 规则是针对 API Gateway 的 route 还是用户在 Sentinel 中定义的 API 分组，默认是 route。
+     */
     private int resourceMode = SentinelGatewayConstants.RESOURCE_MODE_ROUTE_ID;
 
+    /**
+     * 限流指标维度，同限流规则的 grade 字段 qps OR thread
+     */
     private int grade = RuleConstant.FLOW_GRADE_QPS;
+
+    /**
+     * 限流阈值
+     */
     private double count;
+
+    /**
+     * 统计时间窗口，单位是秒，默认是 1 秒。
+     */
     private long intervalSec = 1;
 
-    private int controlBehavior = RuleConstant.CONTROL_BEHAVIOR_DEFAULT;
-    private int burst;
     /**
+     * 流量整形的控制效果，同限流规则的 controlBehavior 字段，目前支持快速失败和匀速排队两种模式，默认是快速失败。
+     */
+    private int controlBehavior = RuleConstant.CONTROL_BEHAVIOR_DEFAULT;
+
+    /**
+     * 应对突发请求时额外允许的请求数目。
+     */
+    private int burst;
+
+    /**
+     * 匀速排队模式下的最长排队时间，单位是毫秒，仅在匀速排队模式下生效
      * For throttle (rate limiting with queueing).
      */
     private int maxQueueingTimeoutMs = 500;
 
     /**
-     * For parameter flow control. If not set, the gateway rule will be
-     * converted to normal flow rule.
+     * 参数限流配置,若不提供，则代表不针对参数进行限流，该网关规则将会被转换成普通流控规则；否则会转换成热点规则
+     * For parameter flow control. If not set, the gateway rule will be converted to normal flow rule.
      */
     private GatewayParamFlowItem paramItem;
 
-    public GatewayFlowRule() {}
+    public GatewayFlowRule(){
+    }
 
-    public GatewayFlowRule(String resource) {
+    public GatewayFlowRule(String resource){
         this.resource = resource;
     }
 
-    public String getResource() {
+    public String getResource(){
         return resource;
     }
 
-    public GatewayFlowRule setResource(String resource) {
+    public GatewayFlowRule setResource(String resource){
         this.resource = resource;
         return this;
     }
 
-    public int getResourceMode() {
+    public int getResourceMode(){
         return resourceMode;
     }
 
-    public GatewayFlowRule setResourceMode(int resourceMode) {
+    public GatewayFlowRule setResourceMode(int resourceMode){
         this.resourceMode = resourceMode;
         return this;
     }
 
-    public int getGrade() {
+    public int getGrade(){
         return grade;
     }
 
-    public GatewayFlowRule setGrade(int grade) {
+    public GatewayFlowRule setGrade(int grade){
         this.grade = grade;
         return this;
     }
 
-    public int getControlBehavior() {
+    public int getControlBehavior(){
         return controlBehavior;
     }
 
-    public GatewayFlowRule setControlBehavior(int controlBehavior) {
+    public GatewayFlowRule setControlBehavior(int controlBehavior){
         this.controlBehavior = controlBehavior;
         return this;
     }
 
-    public double getCount() {
+    public double getCount(){
         return count;
     }
 
-    public GatewayFlowRule setCount(double count) {
+    public GatewayFlowRule setCount(double count){
         this.count = count;
         return this;
     }
 
-    public long getIntervalSec() {
+    public long getIntervalSec(){
         return intervalSec;
     }
 
-    public GatewayFlowRule setIntervalSec(long intervalSec) {
+    public GatewayFlowRule setIntervalSec(long intervalSec){
         this.intervalSec = intervalSec;
         return this;
     }
 
-    public int getBurst() {
+    public int getBurst(){
         return burst;
     }
 
-    public GatewayFlowRule setBurst(int burst) {
+    public GatewayFlowRule setBurst(int burst){
         this.burst = burst;
         return this;
     }
 
-    public GatewayParamFlowItem getParamItem() {
+    public GatewayParamFlowItem getParamItem(){
         return paramItem;
     }
 
-    public GatewayFlowRule setParamItem(GatewayParamFlowItem paramItem) {
+    public GatewayFlowRule setParamItem(GatewayParamFlowItem paramItem){
         this.paramItem = paramItem;
         return this;
     }
 
-    public int getMaxQueueingTimeoutMs() {
+    public int getMaxQueueingTimeoutMs(){
         return maxQueueingTimeoutMs;
     }
 
-    public GatewayFlowRule setMaxQueueingTimeoutMs(int maxQueueingTimeoutMs) {
+    public GatewayFlowRule setMaxQueueingTimeoutMs(int maxQueueingTimeoutMs){
         this.maxQueueingTimeoutMs = maxQueueingTimeoutMs;
         return this;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) { return true; }
-        if (o == null || getClass() != o.getClass()) { return false; }
+    public boolean equals(Object o){
+        if (this == o){
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()){
+            return false;
+        }
 
-        GatewayFlowRule rule = (GatewayFlowRule)o;
+        GatewayFlowRule rule = (GatewayFlowRule) o;
 
-        if (resourceMode != rule.resourceMode) { return false; }
-        if (grade != rule.grade) { return false; }
-        if (Double.compare(rule.count, count) != 0) { return false; }
-        if (intervalSec != rule.intervalSec) { return false; }
-        if (controlBehavior != rule.controlBehavior) { return false; }
-        if (burst != rule.burst) { return false; }
-        if (maxQueueingTimeoutMs != rule.maxQueueingTimeoutMs) { return false; }
-        if (!Objects.equals(resource, rule.resource)) { return false; }
+        if (resourceMode != rule.resourceMode){
+            return false;
+        }
+        if (grade != rule.grade){
+            return false;
+        }
+        if (Double.compare(rule.count, count) != 0){
+            return false;
+        }
+        if (intervalSec != rule.intervalSec){
+            return false;
+        }
+        if (controlBehavior != rule.controlBehavior){
+            return false;
+        }
+        if (burst != rule.burst){
+            return false;
+        }
+        if (maxQueueingTimeoutMs != rule.maxQueueingTimeoutMs){
+            return false;
+        }
+        if (!Objects.equals(resource, rule.resource)){
+            return false;
+        }
         return Objects.equals(paramItem, rule.paramItem);
 
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(){
         int result;
         long temp;
         result = resource != null ? resource.hashCode() : 0;
         result = 31 * result + resourceMode;
         result = 31 * result + grade;
         temp = Double.doubleToLongBits(count);
-        result = 31 * result + (int)(temp ^ (temp >>> 32));
-        result = 31 * result + (int)(intervalSec ^ (intervalSec >>> 32));
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (int) (intervalSec ^ (intervalSec >>> 32));
         result = 31 * result + controlBehavior;
         result = 31 * result + burst;
         result = 31 * result + maxQueueingTimeoutMs;
@@ -170,17 +218,9 @@ public class GatewayFlowRule {
     }
 
     @Override
-    public String toString() {
-        return "GatewayFlowRule{" +
-            "resource='" + resource + '\'' +
-            ", resourceMode=" + resourceMode +
-            ", grade=" + grade +
-            ", count=" + count +
-            ", intervalSec=" + intervalSec +
-            ", controlBehavior=" + controlBehavior +
-            ", burst=" + burst +
-            ", maxQueueingTimeoutMs=" + maxQueueingTimeoutMs +
-            ", paramItem=" + paramItem +
-            '}';
+    public String toString(){
+        return "GatewayFlowRule{" + "resource='" + resource + '\'' + ", resourceMode=" + resourceMode + ", grade=" + grade + ", count=" + count
+                        + ", intervalSec=" + intervalSec + ", controlBehavior=" + controlBehavior + ", burst=" + burst + ", maxQueueingTimeoutMs="
+                        + maxQueueingTimeoutMs + ", paramItem=" + paramItem + '}';
     }
 }

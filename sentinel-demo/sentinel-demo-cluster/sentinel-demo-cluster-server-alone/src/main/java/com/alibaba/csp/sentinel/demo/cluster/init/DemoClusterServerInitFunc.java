@@ -43,6 +43,7 @@ public class DemoClusterServerInitFunc implements InitFunc {
 
     @Override
     public void init() throws Exception {
+
         // Register cluster flow rule property supplier which creates data source by namespace.
         ClusterFlowRuleManager.setPropertySupplier(namespace -> {
             ReadableDataSource<String, List<FlowRule>> ds = new NacosDataSource<>(remoteAddress, groupId,
@@ -50,6 +51,7 @@ public class DemoClusterServerInitFunc implements InitFunc {
                 source -> JSON.parseObject(source, new TypeReference<List<FlowRule>>() {}));
             return ds.getProperty();
         });
+
         // Register cluster parameter flow rule property supplier.
         ClusterParamFlowRuleManager.setPropertySupplier(namespace -> {
             ReadableDataSource<String, List<ParamFlowRule>> ds = new NacosDataSource<>(remoteAddress, groupId,
@@ -62,6 +64,7 @@ public class DemoClusterServerInitFunc implements InitFunc {
         ReadableDataSource<String, Set<String>> namespaceDs = new NacosDataSource<>(remoteAddress, groupId,
             namespaceSetDataId, source -> JSON.parseObject(source, new TypeReference<Set<String>>() {}));
         ClusterServerConfigManager.registerNamespaceSetProperty(namespaceDs.getProperty());
+
         // Server transport configuration data source.
         ReadableDataSource<String, ServerTransportConfig> transportConfigDs = new NacosDataSource<>(remoteAddress,
             groupId, serverTransportDataId,

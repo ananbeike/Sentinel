@@ -24,17 +24,23 @@ import com.alibaba.csp.sentinel.slots.block.RuleConstant;
  * @author Eric Zhao
  * @since 1.4.0
  */
-public class ClusterFlowConfig {
+public class ClusterFlowConfig{
 
     /**
      * Global unique ID.
+     * 全局唯一的规则 ID，由集群限流管控端分配.
      */
     private Long flowId;
 
     /**
      * Threshold type (average by local value or global value).
+     * 阈值模式，默认（0）为单机均摊，1 为全局阈值.
      */
     private int thresholdType = ClusterRuleConstant.FLOW_THRESHOLD_AVG_LOCAL;
+
+    /**
+     * 在 client 连接失败或通信失败时，是否退化到本地的限流模式
+     */
     private boolean fallbackToLocalWhenFail = true;
 
     /**
@@ -43,82 +49,97 @@ public class ClusterFlowConfig {
     private int strategy = ClusterRuleConstant.FLOW_CLUSTER_STRATEGY_NORMAL;
 
     private int sampleCount = ClusterRuleConstant.DEFAULT_CLUSTER_SAMPLE_COUNT;
+
     /**
      * The time interval length of the statistic sliding window (in milliseconds)
      */
     private int windowIntervalMs = RuleConstant.DEFAULT_WINDOW_INTERVAL_MS;
 
-    public Long getFlowId() {
+    public Long getFlowId(){
         return flowId;
     }
 
-    public ClusterFlowConfig setFlowId(Long flowId) {
+    public ClusterFlowConfig setFlowId(Long flowId){
         this.flowId = flowId;
         return this;
     }
 
-    public int getThresholdType() {
+    public int getThresholdType(){
         return thresholdType;
     }
 
-    public ClusterFlowConfig setThresholdType(int thresholdType) {
+    public ClusterFlowConfig setThresholdType(int thresholdType){
         this.thresholdType = thresholdType;
         return this;
     }
 
-    public int getStrategy() {
+    public int getStrategy(){
         return strategy;
     }
 
-    public ClusterFlowConfig setStrategy(int strategy) {
+    public ClusterFlowConfig setStrategy(int strategy){
         this.strategy = strategy;
         return this;
     }
 
-    public boolean isFallbackToLocalWhenFail() {
+    public boolean isFallbackToLocalWhenFail(){
         return fallbackToLocalWhenFail;
     }
 
-    public ClusterFlowConfig setFallbackToLocalWhenFail(boolean fallbackToLocalWhenFail) {
+    public ClusterFlowConfig setFallbackToLocalWhenFail(boolean fallbackToLocalWhenFail){
         this.fallbackToLocalWhenFail = fallbackToLocalWhenFail;
         return this;
     }
 
-    public int getSampleCount() {
+    public int getSampleCount(){
         return sampleCount;
     }
 
-    public ClusterFlowConfig setSampleCount(int sampleCount) {
+    public ClusterFlowConfig setSampleCount(int sampleCount){
         this.sampleCount = sampleCount;
         return this;
     }
 
-    public int getWindowIntervalMs() {
+    public int getWindowIntervalMs(){
         return windowIntervalMs;
     }
 
-    public ClusterFlowConfig setWindowIntervalMs(int windowIntervalMs) {
+    public ClusterFlowConfig setWindowIntervalMs(int windowIntervalMs){
         this.windowIntervalMs = windowIntervalMs;
         return this;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) { return true; }
-        if (o == null || getClass() != o.getClass()) { return false; }
+    public boolean equals(Object o){
+        if (this == o){
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()){
+            return false;
+        }
 
-        ClusterFlowConfig that = (ClusterFlowConfig)o;
+        ClusterFlowConfig that = (ClusterFlowConfig) o;
 
-        if (thresholdType != that.thresholdType) { return false; }
-        if (fallbackToLocalWhenFail != that.fallbackToLocalWhenFail) { return false; }
-        if (strategy != that.strategy) { return false; }
-        if (sampleCount != that.sampleCount) { return false; }
-        if (windowIntervalMs != that.windowIntervalMs) { return false; }
+        if (thresholdType != that.thresholdType){
+            return false;
+        }
+        if (fallbackToLocalWhenFail != that.fallbackToLocalWhenFail){
+            return false;
+        }
+        if (strategy != that.strategy){
+            return false;
+        }
+        if (sampleCount != that.sampleCount){
+            return false;
+        }
+        if (windowIntervalMs != that.windowIntervalMs){
+            return false;
+        }
         return flowId != null ? flowId.equals(that.flowId) : that.flowId == null;
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode(){
         int result = flowId != null ? flowId.hashCode() : 0;
         result = 31 * result + thresholdType;
         result = 31 * result + (fallbackToLocalWhenFail ? 1 : 0);
@@ -129,14 +150,8 @@ public class ClusterFlowConfig {
     }
 
     @Override
-    public String toString() {
-        return "ClusterFlowConfig{" +
-            "flowId=" + flowId +
-            ", thresholdType=" + thresholdType +
-            ", fallbackToLocalWhenFail=" + fallbackToLocalWhenFail +
-            ", strategy=" + strategy +
-            ", sampleCount=" + sampleCount +
-            ", windowIntervalMs=" + windowIntervalMs +
-            '}';
+    public String toString(){
+        return "ClusterFlowConfig{" + "flowId=" + flowId + ", thresholdType=" + thresholdType + ", fallbackToLocalWhenFail=" + fallbackToLocalWhenFail
+                        + ", strategy=" + strategy + ", sampleCount=" + sampleCount + ", windowIntervalMs=" + windowIntervalMs + '}';
     }
 }

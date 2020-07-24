@@ -31,38 +31,45 @@ import com.alibaba.csp.sentinel.slots.clusterbuilder.ClusterBuilderSlot;
 /**
  * @author jialiang.linjl
  */
-public class MetricTimerListener implements Runnable {
+public class MetricTimerListener implements Runnable{
 
-    private static final MetricWriter metricWriter = new MetricWriter(SentinelConfig.singleMetricFileSize(),
-        SentinelConfig.totalMetricFileCount());
+    private static final MetricWriter metricWriter = new MetricWriter(SentinelConfig.singleMetricFileSize(), SentinelConfig.totalMetricFileCount());
 
+    /**
+     * 每秒把统计的数据写到日志里去
+     */
     @Override
-    public void run() {
+    public void run(){
+
         Map<Long, List<MetricNode>> maps = new TreeMap<>();
-        for (Entry<ResourceWrapper, ClusterNode> e : ClusterBuilderSlot.getClusterNodeMap().entrySet()) {
+
+        //遍历集群节点
+        for (Entry<ResourceWrapper, ClusterNode> e : ClusterBuilderSlot.getClusterNodeMap().entrySet()){
             ClusterNode node = e.getValue();
             Map<Long, MetricNode> metrics = node.metrics();
             aggregate(maps, metrics, node);
         }
+
+        //汇总统计的数据
         aggregate(maps, Constants.ENTRY_NODE.metrics(), Constants.ENTRY_NODE);
-        if (!maps.isEmpty()) {
-            for (Entry<Long, List<MetricNode>> entry : maps.entrySet()) {
-                try {
+        if (!maps.isEmpty()){
+            for (Entry<Long, List<MetricNode>> entry : maps.entrySet()){
+                try{
                     metricWriter.write(entry.getKey(), entry.getValue());
-                } catch (Exception e) {
+                }catch (Exception e){
                     RecordLog.warn("[MetricTimerListener] Write metric error", e);
                 }
             }
         }
     }
 
-    private void aggregate(Map<Long, List<MetricNode>> maps, Map<Long, MetricNode> metrics, ClusterNode node) {
-        for (Entry<Long, MetricNode> entry : metrics.entrySet()) {
+    private void aggregate(Map<Long, List<MetricNode>> maps,Map<Long, MetricNode> metrics,ClusterNode node){
+        for (Entry<Long, MetricNode> entry : metrics.entrySet()){
             long time = entry.getKey();
             MetricNode metricNode = entry.getValue();
             metricNode.setResource(node.getName());
             metricNode.setClassification(node.getResourceType());
-            if (maps.get(time) == null) {
+            if (maps.get(time) == null){
                 maps.put(time, new ArrayList<MetricNode>());
             }
             List<MetricNode> nodes = maps.get(time);
