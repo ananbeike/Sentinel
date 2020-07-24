@@ -41,6 +41,18 @@ import com.alibaba.csp.sentinel.util.function.Function;
  */
 public class FlowRuleChecker{
 
+    /**
+     *
+     * FlowSlot 会调用此方法判断
+     *
+     * @param ruleProvider
+     * @param resource
+     * @param context
+     * @param node
+     * @param count
+     * @param prioritized
+     * @throws BlockException
+     */
     public void checkFlow(
                     Function<String, Collection<FlowRule>> ruleProvider,
                     ResourceWrapper resource,
@@ -66,16 +78,18 @@ public class FlowRuleChecker{
     }
 
     public boolean canPassCheck(/* @NonNull */ FlowRule rule,Context context,DefaultNode node,int acquireCount,boolean prioritized){
+        // 来源app限制
         String limitApp = rule.getLimitApp();
         if (limitApp == null){
             return true;
         }
 
-        // 集群模式
+        // 流控规则 是否是集群模式
         if (rule.isClusterMode()){
             return passClusterCheck(rule, context, node, acquireCount, prioritized);
         }
 
+        //不是集群模式  则走本地模式
         return passLocalCheck(rule, context, node, acquireCount, prioritized);
     }
 
@@ -146,13 +160,31 @@ public class FlowRuleChecker{
         return null;
     }
 
+    /**
+     * 集群模式的流控规则校验；用SPI机制获取 TokenService
+     * 
+     * @param rule
+     *            当前流控规则
+     * @param context
+     * @param node
+     * @param acquireCount
+     * @param prioritized
+     * @return
+     */
     private static boolean passClusterCheck(FlowRule rule,Context context,DefaultNode node,int acquireCount,boolean prioritized){
         try{
 
+            /**
+             * 根据当前实例的角色获取集群tokenService
+             * 1、client 模式取默认的 DefaultClusterTokenClient
+             * 2、server 模式取默认的 DefaultEmbeddedTokenServer -- 嵌入模式下的集群
+             */
             TokenService clusterService = pickClusterService();
             if (clusterService == null){
+                // 集群模式 但是又拿不到tokenService，则走本地模式（如果不走本地模式，则直接通过）
                 return fallbackToLocalOrPass(rule, context, node, acquireCount, prioritized);
             }
+
             long flowId = rule.getClusterConfig().getFlowId();
 
             TokenResult result = clusterService.requestToken(flowId, acquireCount, prioritized);
@@ -178,6 +210,7 @@ public class FlowRuleChecker{
 
     private static TokenService pickClusterService(){
         if (ClusterStateManager.isClient()){
+            //com.alibaba.csp.sentinel.cluster.client.DefaultClusterTokenClient
             return TokenClientProvider.getClient();
         }
         if (ClusterStateManager.isServer()){

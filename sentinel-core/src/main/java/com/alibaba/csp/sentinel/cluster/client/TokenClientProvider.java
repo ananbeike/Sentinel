@@ -24,34 +24,39 @@ import com.alibaba.csp.sentinel.util.SpiLoader;
  * @author Eric Zhao
  * @since 1.4.0
  */
-public final class TokenClientProvider {
+public final class TokenClientProvider{
 
     private static ClusterTokenClient client = null;
 
-    static {
+    static{
         // Not strictly thread-safe, but it's OK since it will be resolved only once.
         resolveTokenClientInstance();
     }
 
-    public static ClusterTokenClient getClient() {
+    public static ClusterTokenClient getClient(){
         return client;
     }
 
-    private static void resolveTokenClientInstance() {
+    /**
+     * Sentinel-clusater-clinet-default中通过SPI来指定Client端的TokenService:
+     * com.alibaba.csp.sentinel.cluster.client.ClusterTokenClient----> com.alibaba.csp.sentinel.cluster.client.DefaultClusterTokenClient
+     *
+     * @see com.alibaba.csp.sentinel.cluster.client.DefaultClusterTokenClient
+     */
+    private static void resolveTokenClientInstance(){
         ClusterTokenClient resolvedClient = SpiLoader.loadFirstInstance(ClusterTokenClient.class);
-        if (resolvedClient == null) {
-            RecordLog.info(
-                "[TokenClientProvider] No existing cluster token client, cluster client mode will not be activated");
-        } else {
+        if (resolvedClient == null){
+            RecordLog.info("[TokenClientProvider] No existing cluster token client, cluster client mode will not be activated");
+        }else{
             client = resolvedClient;
-            RecordLog.info(
-                "[TokenClientProvider] Cluster token client resolved: " + client.getClass().getCanonicalName());
+            RecordLog.info("[TokenClientProvider] Cluster token client resolved: " + client.getClass().getCanonicalName());
         }
     }
 
-    public static boolean isClientSpiAvailable() {
+    public static boolean isClientSpiAvailable(){
         return getClient() != null;
     }
 
-    private TokenClientProvider() {}
+    private TokenClientProvider(){
+    }
 }
